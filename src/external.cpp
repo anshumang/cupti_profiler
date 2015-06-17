@@ -19,7 +19,7 @@
 
 #include "CuptiProfiler.h"
 
-CuptiProfiler *p_instance = NULL;
+extern CuptiProfiler *p_instance;
 
 extern "C"
 void CuptiProfilerCreate()

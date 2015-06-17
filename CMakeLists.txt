@@ -10,7 +10,7 @@ set_property(TARGET cupti PROPERTY IMPORTED_LOCATION "/usr/local/cuda/extras/CUP
 
 project(cupti_profiler)
 
-include_directories(include ../include /usr/include /usr/local/cuda/extras/CUPTI/include)
+include_directories(include ../include /usr/include /usr/local/cuda/extras/CUPTI/include /usr/include /usr/local/cuda/include)
 
 add_library(cupti_profiler SHARED src/external.cpp src/CuptiProfiler.cpp)
 

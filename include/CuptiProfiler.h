@@ -23,17 +23,41 @@
 #include <utility>
 #include <vector>
 #include <cstddef>
+#include <iostream>
+#include <cstdlib>
+#include <cupti.h>
+
+#define CUPTI_CALL(call)                                                \
+  do {                                                                  \
+    CUptiResult _status = call;                                         \
+    if (_status != CUPTI_SUCCESS) {                                     \
+      const char *errstr;                                               \
+      cuptiGetResultString(_status, &errstr);                           \
+      std::cerr << __FILE__ << ":" << __LINE__ << ":" << "error: function " << #call  << "failed with error " << errstr << std::endl; \
+                       \
+      std::exit(-1);                                                         \
+    }                                                                   \
+  } while (0)
+
+#define BUF_SIZE (32 * 1024)
+#define ALIGN_SIZE (8)
+#define ALIGN_BUFFER(buffer, align)                                            \
+  (((uintptr_t) (buffer) & ((align)-1)) ? ((buffer) + (align) - ((uintptr_t) (buffer) & ((align)-1))) : (buffer))
 
 struct CuptiProfiler
 {
-   typedef std::pair<unsigned long long, unsigned long long> StartSpanTuple; 
+   typedef std::pair<unsigned long, unsigned long> StartSpanTuple; 
    typedef std::vector< StartSpanTuple > StartSpanTupleVector;
    StartSpanTupleVector m_pair_vec;
+   unsigned long m_start;
+   unsigned long m_tot_records, m_curr_records;
+   size_t m_cupti_buffer_size, m_cupti_buffer_pool_limit;
+   friend void CUPTIAPI return_buffer(CUcontext ctx, uint32_t stream_id, uint8_t *buffer, size_t size, size_t valid_size);
    CuptiProfiler();
    ~CuptiProfiler();
    void read();
 private:
-   void sort();
+   void process(CUpti_Activity *);
 };
 
 #endif
