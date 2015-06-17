@@ -20,6 +20,7 @@
 #ifndef _CUPTI_PROFILER_H
 #define _CUPTI_PROFILER_H
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include <cstddef>
@@ -46,9 +47,10 @@
 
 struct CuptiProfiler
 {
-   typedef std::pair<unsigned long, unsigned long> StartSpanTuple; 
-   typedef std::vector< StartSpanTuple > StartSpanTupleVector;
-   StartSpanTupleVector m_pair_vec;
+   typedef std::pair<unsigned long, unsigned long> CuptiTuple; 
+   typedef std::vector< CuptiTuple > CuptiTupleVector;
+   CuptiTupleVector m_tup_vec;
+   CuptiTupleVector m_tup_vec_raw;
    unsigned long m_start;
    unsigned long m_tot_records, m_curr_records;
    size_t m_cupti_buffer_size, m_cupti_buffer_pool_limit;
@@ -57,7 +59,9 @@ struct CuptiProfiler
    ~CuptiProfiler();
    void read();
 private:
-   void process(CUpti_Activity *);
+   void insert(CUpti_Activity *);
+   bool cupti_tuple_compare(CuptiTuple& first, CuptiTuple& second);
+   void process();
 };
 
 #endif

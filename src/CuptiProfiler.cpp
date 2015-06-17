@@ -43,7 +43,7 @@ void CUPTIAPI return_buffer(CUcontext ctx, uint32_t stream_id, uint8_t *buffer, 
     do {
       status = cuptiActivityGetNextRecord(buffer, valid_size, &record);
       if (status == CUPTI_SUCCESS) {
-        p_instance->process(record);
+        p_instance->insert(record);
       }
       else if (status == CUPTI_ERROR_MAX_LIMIT_REACHED)
         break;
@@ -89,10 +89,79 @@ void CuptiProfiler::read()
   CUPTI_CALL(cuptiActivityFlushAll(0));
   m_tot_records+=m_curr_records;
   std::cout << "CuptiProfiler::read " << m_curr_records << "/" << m_tot_records << std::endl;
+  this->process();
 }
 
-void CuptiProfiler::process(CUpti_Activity *record)
+void CuptiProfiler::insert(CUpti_Activity *record)
 {
   //std::cout << "CuptiProfiler::process" << std::endl;
   m_curr_records++;
+  if((record->kind == CUPTI_ACTIVITY_KIND_CONCURRENT_KERNEL)||(record->kind == CUPTI_ACTIVITY_KIND_KERNEL))
+  {
+      CUpti_ActivityKernel2 *kernel = (CUpti_ActivityKernel2 *) record;
+      CuptiTuple curr_tup(kernel->start-m_start, kernel->end-m_start);
+      m_tup_vec_raw.push_back(curr_tup);
+  }
+}
+
+bool CuptiProfiler::cupti_tuple_compare(CuptiTuple& first, CuptiTuple& second) 
+{
+  return first.first < second.first;
+}
+
+void CuptiProfiler::process()
+{
+   /*std::sort(m_tup_vec_raw.begin(), m_tup_vec_raw.end(), [](CuptiTuple& first, CuptiTuple& second)
+   {
+     return first.first < second.first;
+   }
+   )*/;
+   std::sort(m_tup_vec_raw.begin(), m_tup_vec_raw.end());
+   int count=0;
+   m_tup_vec.push_back(m_tup_vec_raw[0]);
+   while (count<m_tup_vec_raw.size())
+   {
+     unsigned long last_start, last_end, curr_start, curr_end;
+     last_start = m_tup_vec.back().first;
+     last_end = m_tup_vec.back().second;
+     curr_start = m_tup_vec_raw[count].first;
+     curr_end = m_tup_vec_raw[count].second;
+     int last_count = count, lookahead_search=0, lookahead_search_empty=1;
+
+     if(curr_start > last_end)
+     {
+        m_tup_vec.push_back(m_tup_vec_raw[count]);
+     }
+     else
+     {
+        lookahead_search=1;
+        int lookahead=1;
+        while (lookahead < m_tup_vec_raw.size()-count-1)
+        {
+           unsigned lookahead_start, lookahead_end;
+           lookahead_start = m_tup_vec_raw[count+lookahead].first;   
+           lookahead_end = m_tup_vec_raw[count+lookahead].second;   
+           if(lookahead_start>last_end)
+           {
+             m_tup_vec.pop_back();
+             int prev_end = m_tup_vec_raw[count+lookahead-1].second;
+             m_tup_vec.push_back(CuptiTuple(last_start, prev_end));
+             m_tup_vec.push_back(CuptiTuple(lookahead_start, lookahead_end));
+             count = count + lookahead + 1;
+             lookahead_search_empty=0;
+             break;
+           }
+           lookahead++;
+        }
+     }
+
+     if(lookahead_search && lookahead_search_empty
+)
+        break;
+
+     if(last_count == count)
+     {
+       count++;
+     }
+   }
 }
