@@ -190,7 +190,14 @@ void CuptiProfiler::process()
    count = 0;
    while(count < disjoint_records)
    {
-      std::cout << count << " " << m_tup_vec[m_tot_disjoint_records+count].second - m_tup_vec[m_tot_disjoint_records+count].first << std::endl;
+      if(count < disjoint_records - 1)
+      {
+          std::cout << count << " " << m_tup_vec[m_tot_disjoint_records+count].first << " " << m_tup_vec[m_tot_disjoint_records+count].second - m_tup_vec[m_tot_disjoint_records+count].first << " " << m_tup_vec[m_tot_disjoint_records+count+1].first - m_tup_vec[m_tot_disjoint_records+count].second << " " << m_tup_vec[m_tot_disjoint_records+count].second << std::endl;
+      }
+      else
+      {
+          std::cout << count << " " << m_tup_vec[m_tot_disjoint_records+count].first << " " << m_tup_vec[m_tot_disjoint_records+count].second - m_tup_vec[m_tot_disjoint_records+count].first << " " << m_tup_vec[m_tot_disjoint_records+count].second << std::endl;
+      }
       count++; 
    }
    m_tot_disjoint_records+=disjoint_records;
