@@ -19,9 +19,9 @@
 
 #ifndef _CUPTI_PROFILER_EXTERNAL_H
 #define _CUPTI_PROFILER_EXTERNAL_H
-
+extern "C" {
 void CuptiProfilerCreate();
 void CuptiProfilerDestroy();
 void CuptiProfilerRead();
-
+}
 #endif
